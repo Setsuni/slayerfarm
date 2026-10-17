@@ -359,7 +359,6 @@ function achievements.detectedExpansion()
     for number = 1, #data.expansions - 1 do
         if mq.TLO.Me.HaveExpansion(number)() then detected = number end
     end
-    if detected >= 16 then detected = #data.expansions - 1 end
     return detected
 end
 

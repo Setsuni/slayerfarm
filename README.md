@@ -8,22 +8,24 @@ A MacroQuest Lua script that works through EverQuest **Slayer achievements** for
 
 **Achievements tab**
 - Reads every Slayer achievement live from the game, with progress bars, grouped under the parent achievement (Progressive, Highly Decorated, A Force of Nature).
-- Achievements with several objectives (like *I'm a People Person!*) are broken out into objective rows, and only unfinished objectives are hunted.
+- Achievements with several objectives (like *I'm a People Person!*) are broken out into objective rows. Only unfinished objectives are hunted, and zone suggestions follow the races you still need.
 - Optional achievements are greyed out and left out of farming unless you tick them.
 - Shows which mob types count. Click one to search it on Allakhazam.
-- Suggests zones for each achievement, filtered to the expansions you own. Instanced suggestions (LDoN) are shown as manual.
+- Suggests zones for each achievement, filtered to the expansions your account owns (detected automatically, or pick one in the dropdown). Instanced suggestions (LDoN) are shown as manual.
 
 **Farm tab**
 - **Auto mode** ranks zones by how many of your unfinished achievements they cover, so one trip works on several. Or pick a zone yourself.
 - **Brings your group**: broadcasts `/travelto` over DanNet, waits for everyone, then puts followers on `/boxr chase`.
-- Shows what you're working on in the zone, what mobs it's looking for, your current target and its race, and Slayer kills per hour.
+- Shows what you're working on in the zone with progress and **+N this session** for each achievement, what mobs it's looking for, and your current target and its race.
+- **Slayer kills** and the rate per hour only count kills that counted toward an achievement you're farming.
 - Moves to the next zone by itself when everything in the current one is done.
 
 **Hunter**
 - Picks targets by race and body type, not by name, and always handles anything aggroed on you first.
 - With *Kill anything* on, mobs that count still come first.
 - Uses real walking path length to choose the nearest mob, skips mobs other players are near, rests when the group is low, and gets itself unstuck.
-- Per-zone ignore list, with automatic ignoring of mobs that don't take damage.
+- Per-zone ignore list. Ignoring your current target moves on immediately, and mobs that don't take damage are ignored automatically.
+- Drops a mob it's walking to as soon as it stops counting (for example, when you finish that achievement).
 - Draws the hunt radius on the in-game map.
 - Learns as it goes: when a kill raises an achievement count, it remembers that race.
 
@@ -39,8 +41,12 @@ A MacroQuest Lua script that works through EverQuest **Slayer achievements** for
 
 ## Install
 
-1. Copy this folder into your MacroQuest `lua` folder as `lua\slayerfarm`.
+1. Put the files in your MacroQuest `lua` folder as `lua\slayerfarm`. Either:
+   - `git clone https://github.com/Setsuni/slayerfarm.git` from inside your `lua` folder, or
+   - **Code > Download ZIP**, extract it, and rename the folder from `slayerfarm-main` to `slayerfarm`.
 2. In game: `/lua run slayerfarm`
+
+The folder must be named `slayerfarm`, or the script can't load its files.
 
 ## Commands
 
@@ -67,7 +73,6 @@ Settings are saved in your MacroQuest `config` folder:
 
 ## Known limits
 
-- MQ can only detect expansions up to Underfoot. If you own all of those, Slayer Farm assumes you own everything. Pick your expansion in the dropdown if that's wrong.
 - Zone suggestions come from community data and are best effort. Some mob types use plain-English names that may not match the game's race names exactly; the learning feature fills those gaps over time.
 
 ## Credits
