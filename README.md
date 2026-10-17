@@ -72,8 +72,7 @@ Settings are saved in your MacroQuest `config` folder:
 
 ## Credits
 
-- Achievement, mob and zone data from [Bonzz's Slayer page](https://www.bonzz.com/slayerach.htm).
-- Zone expansion tags from MacroQuest's `Zones.ini`.
+- Achievement, mob and zone data from [Bonzz's Slayer page](https://www.bonzz.com/slayerach.htm), [Allakhazam](https://everquest.allakhazam.com/) comments, and EverQuest Nexus.
 - Hunting inspired by MultiHunter by Nerp (priority system by knave23). Slayer Farm's hunter is a separate rewrite.
 
 ## License

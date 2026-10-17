@@ -1,4 +1,4 @@
--- Achievements, race lists and zone suggestions from Bonzz's Slayer page: https://www.bonzz.com/slayerach.htm
+-- Achievement, mob and zone data from Bonzz's Slayer page (https://www.bonzz.com/slayerach.htm), Allakhazam comments (https://everquest.allakhazam.com/), and EverQuest Nexus.
 
 local data = {}
 
