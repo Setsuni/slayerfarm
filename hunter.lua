@@ -75,7 +75,9 @@ local function haters()
     for i = 1, (mq.TLO.Me.XTargetSlots() or 0) do
         local xtarget = mq.TLO.Me.XTarget(i)
         local id = xtarget.ID() or 0
-        if id > 0 and xtarget.TargetType() == "Auto Hater" then table.insert(result, id) end
+        if id > 0 and xtarget.TargetType() == "Auto Hater" and not settings.isIgnored(zoneShortName(), xtarget.CleanName() or "") then
+            table.insert(result, id)
+        end
     end
     return result
 end
@@ -330,12 +332,21 @@ function hunter.setPaused(paused)
     end
 end
 
-function hunter.ignoreTarget()
-    local name = mq.TLO.Target.CleanName()
-    if not name then return end
+function hunter.ignoreName(name)
+    if not name or name == "" then return end
     settings.setIgnored(zoneShortName(), name, true)
-    if mq.TLO.Target.ID() == hunter.targetId then clearTarget() end
     printf("\ag[Slayer Farm]\ax Ignoring \ay%s\ax in this zone. Remove it on the Farm tab.", name)
+    local current = hunter.targetId > 0 and mq.TLO.Spawn(hunter.targetId).CleanName() or nil
+    if current ~= name and mq.TLO.Target.CleanName() ~= name then return end
+    mq.cmd('/squelch /attack off')
+    if (mq.TLO.Me.Pet.ID() or 0) > 0 then mq.cmd('/squelch /pet back off') end
+    if mq.TLO.Target.CleanName() == name then mq.cmd('/squelch /target clear') end
+    if current == name then clearTarget() end
+    nextScan = 0
+end
+
+function hunter.ignoreTarget()
+    hunter.ignoreName(mq.TLO.Target.CleanName())
 end
 
 function hunter.resetStats()

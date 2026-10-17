@@ -114,6 +114,7 @@ local function makeEntry(achievement, subName)
         zones = zonesFor(entry and entry.zones or {}, parts, remaining),
         open = entry and entry.open or nil,
         manual = entry and entry.manual or nil,
+        onlyIn = entry and entry.onlyIn or nil,
         huntable = entry ~= nil and entry.hunt ~= false,
         known = entry ~= nil,
     }
@@ -320,12 +321,21 @@ function achievements.entryMatches(entry, raceName, bodyName)
     return false
 end
 
+local function allowedHere(entry, zone)
+    if not entry.onlyIn then return true end
+    for _, shortName in ipairs(entry.onlyIn) do
+        if shortName == zone then return true end
+    end
+    return false
+end
+
 function achievements.wantsRace(raceName, bodyName)
-    local key = (raceName or "") .. "|" .. (bodyName or "")
+    local zone = (mq.TLO.Zone.ShortName() or ""):lower()
+    local key = zone .. "|" .. (raceName or "") .. "|" .. (bodyName or "")
     if matchCache[key] == nil then
         matchCache[key] = false
         for _, entry in ipairs(achievements.list) do
-            if achievements.isTargeted(entry) and achievements.entryMatches(entry, raceName or "", bodyName or "") then
+            if achievements.isTargeted(entry) and allowedHere(entry, zone) and achievements.entryMatches(entry, raceName or "", bodyName or "") then
                 matchCache[key] = true
                 break
             end

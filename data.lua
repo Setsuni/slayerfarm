@@ -202,7 +202,7 @@ data.achievements = {
     { name = "Here's Yer Grozmok", sub = "Skill", races = { "troll", }, zones = { "gunthak", "dulak", }, },
     { name = "Get Stupid", sub = "Skill", races = { "ogre", }, zones = { "potactics", }, },
     { name = "Icky!", sub = "Skill", races = { "iksar", }, zones = { "gunthak", "dulak", "oldkaesoraa", }, },
-    { name = "Why the Kylong faces?", sub = "Skill", races = { "iksar", }, zones = { "veksar", }, },
+    { name = "Why the Kylong faces?", sub = "Skill", races = { "iksar", }, zones = { "veksar", }, onlyIn = { "veksar", }, },
     { name = "Good Luck, Bad Guk", sub = "Skill", races = { "guktan", }, zones = {}, manual = "LDoN: missions out of South Ro", },
     { name = "It's a Frog Eat Frog World", sub = "Skill", races = { "froglok", "tadpole", }, zones = { "guktop", "gukbottom", }, },
     { name = "Rrrribit!", sub = "Skill", races = { "frog", }, zones = { "postorms", }, },

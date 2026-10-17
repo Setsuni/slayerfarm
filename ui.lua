@@ -396,13 +396,13 @@ local function drawIgnores()
     ignoreInput = ImGui.InputText("##ignoreInput", ignoreInput)
     ImGui.SameLine()
     if ImGui.Button("Add") and ignoreInput ~= "" then
-        settings.setIgnored(zone, ignoreInput, true)
+        hunter.ignoreName(ignoreInput)
         ignoreInput = ""
     end
     ImGui.SameLine()
     if ImGui.Button("Add Target") then
         local name = mq.TLO.Target.CleanName()
-        if name then settings.setIgnored(zone, name, true) end
+        hunter.ignoreName(name)
     end
 end
 
