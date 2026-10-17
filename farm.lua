@@ -44,6 +44,10 @@ local function groupCommand(command)
     mq.cmdf('/squelch /dgge %s', command)
 end
 
+local function groupTravel()
+    return settings.values.travelGroup and (mq.TLO.Group.Members() or 0) > 0
+end
+
 local function currentZone()
     return (mq.TLO.Zone.ShortName() or ""):lower()
 end
@@ -114,8 +118,11 @@ local function beginTravel(shortName)
     if currentZone() == shortName then return beginGather() end
     log("Traveling to " .. zoneName(shortName))
     groupCommand('/boxr manual')
-    mq.cmdf('/travelto %s', shortName)
-    groupCommand('/travelto ' .. shortName)
+    if groupTravel() then
+        mq.cmdf('/travelto group %s', shortName)
+    else
+        mq.cmdf('/travelto %s', shortName)
+    end
     travelAttempts = 1
     lastMoving = mq.gettime()
     setState("travel", "Traveling to " .. zoneName(shortName))
@@ -124,16 +131,20 @@ end
 local function stopAll(reason)
     hunter.stop(reason)
     opener.stop(reason)
+    if farm.state == "travel" then
+        mq.cmd('/squelch /travelto stop')
+        if groupTravel() then mq.cmd('/squelch /travelto group stop') end
+    end
     if mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
-    if farm.state == "travel" then groupCommand('/nav stop log=off') end
     setState("idle", reason)
 end
 
 local function tickTravel()
     if currentZone() == farm.zone then return beginGather() end
     local now = mq.gettime()
-    if mq.TLO.Me.Moving() or mq.TLO.Navigation.Active() or mq.TLO.Me.Zoning() then lastMoving = now end
-    if now - lastMoving > 30000 then
+    local easyFind = mq.TLO.EasyFind
+    if (easyFind and easyFind.Active()) or mq.TLO.Navigation.Active() or mq.TLO.Me.Zoning() then lastMoving = now end
+    if now - lastMoving > (travelAttempts == 1 and 10000 or 30000) then
         if travelAttempts >= 3 then
             log("Travel to " .. zoneName(farm.zone) .. " failed. Is the zone available to you?")
             return stopAll("Travel failed")
@@ -141,7 +152,6 @@ local function tickTravel()
         travelAttempts = travelAttempts + 1
         lastMoving = now
         mq.cmdf('/travelto %s', farm.zone)
-        groupCommand('/travelto ' .. farm.zone)
     end
     if now - stateSince > 1200000 then
         log("Travel to " .. zoneName(farm.zone) .. " took over 20 minutes, stopping.")
@@ -169,7 +179,7 @@ local function tickGather()
     if not regroupSent and mq.gettime() - stateSince > 60000 and groupMissing() then
         regroupSent = true
         log("Some of the group isn't here yet, sending travel again.")
-        groupCommand('/travelto ' .. farm.zone)
+        mq.cmdf('/travelto group %s', farm.zone)
     end
 end
 
@@ -191,8 +201,9 @@ local function tickHunt()
         log("Everything in " .. zoneName(farm.zone) .. " is done.")
         hunter.stop("Zone complete")
         opener.stop("Zone complete")
-        if settings.values.autoZone then return beginTravel(chooseZone()) end
-        setState("idle", "Zone complete")
+        if settings.values.autoZone and settings.values.autoNextZone then return beginTravel(chooseZone()) end
+        log("Press Start to go to the next zone.")
+        setState("idle", "Zone complete - press Start for the next zone")
     end
 end
 

@@ -11,6 +11,7 @@ opener.objectName = nil
 local zoneId = 0
 local lastOpen = 0
 local lastNav = 0
+local lastTarget = 0
 local currentId = 0
 
 local function inCombat()
@@ -79,7 +80,10 @@ function opener.tick()
     end
 
     if mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
-    if mq.TLO.Target.ID() ~= id then mq.cmdf('/squelch /target id %d', id) end
+    if mq.TLO.Target.ID() ~= id and now - lastTarget > 1000 then
+        mq.cmdf('/squelch /target id %d', id)
+        lastTarget = now
+    end
     if now - lastOpen > 1500 then
         mq.cmd('/squelch /open')
         lastOpen = now

@@ -28,6 +28,8 @@ local defaults = {
     playerRadius = 120,
     killAnything = false,
     showArea = true,
+    finishTargetFirst = false,
+    autoNextZone = false,
 }
 
 local function loadFile(path)

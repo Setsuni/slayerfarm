@@ -28,14 +28,22 @@ local function addUnique(list, value)
     table.insert(list, value)
 end
 
+local singleRaceZones, fewRaceZones = {}, {}
 for _, entry in ipairs(data.achievements) do
     dataByName[normalize(entry.name)] = entry
     if entry.races and #entry.races <= 4 then
+        local target = #entry.races == 1 and singleRaceZones or fewRaceZones
         for _, race in ipairs(entry.races) do
-            zonesByRace[race] = zonesByRace[race] or {}
-            for _, zone in ipairs(entry.zones or {}) do addUnique(zonesByRace[race], zone) end
+            target[race] = target[race] or {}
+            for _, zone in ipairs(entry.zones or {}) do addUnique(target[race], zone) end
         end
     end
+end
+for race, zones in pairs(fewRaceZones) do
+    zonesByRace[race] = (singleRaceZones[race] and #singleRaceZones[race] > 0) and singleRaceZones[race] or zones
+end
+for race, zones in pairs(singleRaceZones) do
+    if #zones > 0 then zonesByRace[race] = zones end
 end
 
 local function zonesFor(baseZones, parts, remaining)
@@ -342,6 +350,17 @@ function achievements.wantsRace(raceName, bodyName)
         end
     end
     return matchCache[key]
+end
+
+function achievements.countsToward(raceName, bodyName)
+    local zone = (mq.TLO.Zone.ShortName() or ""):lower()
+    local names = {}
+    for _, entry in ipairs(achievements.list) do
+        if achievements.isTargeted(entry) and allowedHere(entry, zone) and achievements.entryMatches(entry, raceName or "", bodyName or "") then
+            table.insert(names, entry.name)
+        end
+    end
+    return names
 end
 
 function achievements.zoneAllowed(shortName)

@@ -37,6 +37,15 @@ local function zoneShortName()
     return (mq.TLO.Zone.ShortName() or ""):lower()
 end
 
+local lastSent = {}
+
+local function ready(command, ms)
+    local now = mq.gettime()
+    if now - (lastSent[command] or 0) < ms then return false end
+    lastSent[command] = now
+    return true
+end
+
 local function banSpawn(id, seconds)
     bans[id] = mq.gettime() + seconds * 1000
 end
@@ -211,16 +220,16 @@ end
 
 local function fight(spawn)
     if mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
-    if mq.TLO.Target.ID() ~= hunter.targetId then mq.cmdf('/squelch /target id %d', hunter.targetId) end
+    if mq.TLO.Target.ID() ~= hunter.targetId and ready('target', 1000) then mq.cmdf('/squelch /target id %d', hunter.targetId) end
     if settings.values.meleeAttack then
-        if not mq.TLO.Stick.Active() then mq.cmdf('/squelch /stick id %d 80%% moveback uw', hunter.targetId) end
-        if not mq.TLO.Me.Combat() then mq.cmd('/squelch /attack on') end
+        if not mq.TLO.Stick.Active() and ready('stick', 1500) then mq.cmdf('/squelch /stick id %d 80%% moveback uw', hunter.targetId) end
+        if not mq.TLO.Me.Combat() and ready('attack', 1500) then mq.cmd('/squelch /attack on') end
     elseif mq.gettime() - lastFace > 1500 then
         mq.cmd('/squelch /face fast nolook')
         lastFace = mq.gettime()
     end
     local pet = mq.TLO.Me.Pet
-    if settings.values.usePet and (pet.ID() or 0) > 0 and pet.Target.ID() ~= hunter.targetId then mq.cmd('/squelch /pet attack') end
+    if settings.values.usePet and (pet.ID() or 0) > 0 and pet.Target.ID() ~= hunter.targetId and ready('pet', 2000) then mq.cmd('/squelch /pet attack') end
     if mq.gettime() - engagedSince > 30000 and (spawn.PctHPs() or 100) >= 100 then
         local name = spawn.CleanName() or ""
         printf("\ag[Slayer Farm]\ax \ay%s\ax isn't taking damage, added it to this zone's ignore list.", name)
@@ -276,7 +285,7 @@ local function manageTarget()
     else
         if engaged and mq.TLO.Stick.Active() then mq.cmd('/squelch /stick off') end
         engaged = false
-        if spawn.LineOfSight() and mq.TLO.Target.ID() ~= hunter.targetId then mq.cmdf('/squelch /target id %d', hunter.targetId) end
+        if spawn.LineOfSight() and mq.TLO.Target.ID() ~= hunter.targetId and ready('target', 1000) then mq.cmdf('/squelch /target id %d', hunter.targetId) end
         hunter.status = string.format("Moving to %s (%d)", spawn.CleanName() or "", math.floor(distance))
         navigateTo(spawn, spawn.LineOfSight() and approach or 5)
     end
@@ -368,7 +377,7 @@ function hunter.tick()
 
     if hunter.targetId > 0 then
         local hateList = haters()
-        if not engaged and #hateList > 0 and not isHater(hunter.targetId) then
+        if not engaged and #hateList > 0 and not isHater(hunter.targetId) and not settings.values.finishTargetFirst then
             clearTarget()
         elseif not engaged and not targetNeeded and #hateList == 0 and mq.gettime() - lastNeededCheck > 3000 then
             lastNeededCheck = mq.gettime()
@@ -385,7 +394,9 @@ function hunter.tick()
 
     local hateList = haters()
     if #hateList > 0 then
-        table.sort(hateList, function(a, b) return (mq.TLO.Spawn(a).Distance3D() or 0) < (mq.TLO.Spawn(b).Distance3D() or 0) end)
+        local walk = {}
+        for _, id in ipairs(hateList) do walk[id] = pathLength(id) or math.huge end
+        table.sort(hateList, function(a, b) return walk[a] < walk[b] end)
         setTarget(hateList[1])
         resting = false
         return manageTarget()

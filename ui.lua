@@ -9,7 +9,8 @@ local settings = require('slayerfarm.settings')
 
 local ui = {}
 
-ui.open = true
+ui.hidden = false
+ui.quitRequested = false
 
 local stateColors = {
     idle = ImVec4(0.7, 0.7, 0.7, 1),
@@ -276,6 +277,16 @@ local function drawStatus()
             ImGui.Text("Target:")
             ImGui.SameLine()
             ImGui.TextColored(ImVec4(1, 1, 0.4, 1), string.format("%s (%s)", target.CleanName() or "?", target.Race.Name() or "?"))
+            local counts = achievements.countsToward(target.Race.Name(), target.Body.Name())
+            ImGui.Text("Counts for:")
+            ImGui.SameLine()
+            if #counts > 0 then
+                ImGui.TextWrapped(table.concat(counts, ", "))
+            elseif settings.values.killAnything then
+                ImGui.TextColored(optionalColor, "nothing you're farming (Kill anything is on)")
+            else
+                ImGui.TextColored(grey, "nothing you're farming (attacking you)")
+            end
         end
         ImGui.Text(string.format("Slayer kills: %d   Rate: ~%d/hr   Candidates in range: %d", hunter.kills, hunter.killsPerHour(), hunter.candidates))
         if ImGui.IsItemHovered() then ImGui.SetTooltip("Only kills that counted toward an achievement you're farming, since you pressed Start.") end
@@ -301,6 +312,9 @@ local function drawStatus()
         if ImGui.Button("Ignore Target") then hunter.ignoreTarget() end
         if ImGui.IsItemHovered() then ImGui.SetTooltip("Never hunt mobs with your current target's name in this zone.") end
     end
+    ImGui.SameLine()
+    if ImGui.Button("Exit") then ui.quitRequested = true end
+    if ImGui.IsItemHovered() then ImGui.SetTooltip("Stop farming, save settings and end Slayer Farm.") end
 end
 
 local function workingZone(ranked)
@@ -416,6 +430,15 @@ local function drawDestination(ranked)
         settings.values.autoZone = false
         changed()
     end
+    if settings.values.autoZone then
+        ImGui.SameLine()
+        local autoNext, pressed = ImGui.Checkbox("Move to next zone automatically", settings.values.autoNextZone)
+        if pressed then
+            settings.values.autoNextZone = autoNext
+            changed()
+        end
+        if ImGui.IsItemHovered() then ImGui.SetTooltip("Off: stop when a zone is done and wait for you to press Start.\nOn: travel to the next best zone by itself.") end
+    end
     if not settings.values.autoZone then
         ImGui.SameLine()
         ImGui.SetNextItemWidth(260)
@@ -510,6 +533,7 @@ local function drawHuntSettings()
     checkbox("Kill anything", "killAnything", "Hunt every mob in range, mobs that count first.")
     ImGui.SameLine()
     checkbox("Show hunt area on map", "showArea", "Draws the hunt radius as an orange circle on the in-game map.")
+    checkbox("Finish target first", "finishTargetFirst", "Keep running to the mob you picked even if adds aggro, kill it, then clear the adds.")
 end
 
 local function drawFarmTab()
@@ -528,10 +552,46 @@ local function drawFarmTab()
     end
 end
 
+ui.commands = {
+    { command = "/slayerfarm show", about = "Open the window (same as /slayerfarm on its own)", },
+    { command = "/slayerfarm hide", about = "Hide the window. Farming keeps running; /slayerfarm show brings it back.", },
+    { command = "/slayerfarm start", about = "Start farming", },
+    { command = "/slayerfarm pause", about = "Pause hunting", },
+    { command = "/slayerfarm resume", about = "Resume hunting", },
+    { command = "/slayerfarm stop", about = "Stop farming and any travel. Slayer Farm keeps running.", },
+    { command = "/slayerfarm next", about = "Skip to the next zone", },
+    { command = "/slayerfarm ignore", about = "Never hunt mobs with your target's name in this zone", },
+    { command = "/slayerfarm scan", about = "Rescan your achievements", },
+    { command = "/slayerfarm dump", about = "Write the Slayer category to config/slayerfarm_dump.txt for bug reports", },
+    { command = "/slayerfarm help", about = "List these commands in chat", },
+    { command = "/slayerfarm quit", about = "Stop farming, save settings and end Slayer Farm (also end, exit)", },
+}
+
+local function drawCommandsTab()
+    ImGui.Text("Type these in game:")
+    local flags = bit32.bor(ImGuiTableFlags.RowBg, ImGuiTableFlags.BordersInnerV)
+    if ImGui.BeginTable("commands", 2, flags) then
+        ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("/slayerfarm resume") + 20)
+        ImGui.TableSetupColumn("What it does", ImGuiTableColumnFlags.WidthStretch)
+        ImGui.TableHeadersRow()
+        for _, entry in ipairs(ui.commands) do
+            ImGui.TableNextRow()
+            ImGui.TableNextColumn()
+            ImGui.TextColored(ImVec4(1, 1, 0.4, 1), entry.command)
+            ImGui.TableNextColumn()
+            ImGui.TextWrapped(entry.about)
+        end
+        ImGui.EndTable()
+    end
+    ImGui.Spacing()
+    ImGui.TextColored(grey, "Closing the window (X) or the Exit button on the Farm tab also ends Slayer Farm.")
+    ImGui.TextColored(grey, "Use these rather than /lua stop slayerfarm, so navigation stops and settings are saved first.")
+end
+
 function ui.render()
-    if not ui.open then return end
-    local show
-    ui.open, show = ImGui.Begin("Slayer Farm", ui.open)
+    if ui.hidden then return end
+    local open, show = ImGui.Begin("Slayer Farm", true)
+    if not open then ui.quitRequested = true end
     if show then
         if ImGui.BeginTabBar("tabs") then
             if ImGui.BeginTabItem("Achievements") then
@@ -540,6 +600,10 @@ function ui.render()
             end
             if ImGui.BeginTabItem("Farm") then
                 drawFarmTab()
+                ImGui.EndTabItem()
+            end
+            if ImGui.BeginTabItem("Commands") then
+                drawCommandsTab()
                 ImGui.EndTabItem()
             end
             ImGui.EndTabBar()

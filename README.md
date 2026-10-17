@@ -21,7 +21,7 @@ A MacroQuest Lua script that works through EverQuest **Slayer achievements** for
 - **Brings your group**: broadcasts `/travelto` over DanNet, waits for everyone, then puts followers on `/boxr chase`.
 - Shows what you're working on in the zone with progress and **+N this session** for each achievement, what mobs it's looking for, and your current target and its race.
 - **Slayer kills** and the rate per hour only count kills that counted toward an achievement you're farming.
-- Moves to the next zone by itself when everything in the current one is done.
+- When everything in a zone is done, it stops and waits for you to press Start. Tick **Move to next zone automatically** to have it travel on by itself.
 
 **Hunter**
 - Picks targets by race and body type, not by name, and always handles anything aggroed on you first.
@@ -55,17 +55,20 @@ The folder must be named `slayerfarm`, or the script can't load its files.
 
 | Command | What it does |
 |---|---|
-| `/sf show` / `/sf hide` | Open or close the window |
-| `/sf start` | Start farming |
-| `/sf pause` / `/sf resume` | Pause or resume hunting |
-| `/sf stop` | Stop farming (the script keeps running) |
-| `/sf next` | Skip to the next zone |
-| `/sf ignore` | Never hunt mobs with your target's name in this zone |
-| `/sf scan` | Rescan achievements |
-| `/sf dump` | Write the Slayer category to `config\slayerfarm_dump.txt` for bug reports |
-| `/sf quit` | Stop farming and end the script (also `/sf end`, `/sf exit`) |
+| `/slayerfarm show` / `/slayerfarm hide` | Open or close the window |
+| `/slayerfarm start` | Start farming |
+| `/slayerfarm pause` / `/slayerfarm resume` | Pause or resume hunting |
+| `/slayerfarm stop` | Stop farming and any travel (the script keeps running) |
+| `/slayerfarm next` | Skip to the next zone |
+| `/slayerfarm ignore` | Never hunt mobs with your target's name in this zone |
+| `/slayerfarm scan` | Rescan achievements |
+| `/slayerfarm dump` | Write the Slayer category to `config\slayerfarm_dump.txt` for bug reports |
+| `/slayerfarm help` | List the commands in chat |
+| `/slayerfarm quit` | Stop farming and end the script (also `/slayerfarm end`, `/slayerfarm exit`) |
 
-Use `/sf quit` rather than `/lua stop slayerfarm`, so navigation stops and settings are saved first.
+The **Commands** tab in the window lists these too. Closing the window (X) or pressing **Exit** on the Farm tab ends Slayer Farm the same way as `/slayerfarm quit`; `/slayerfarm hide` only hides it.
+
+Use `/slayerfarm quit` rather than `/lua stop slayerfarm`, so navigation stops and settings are saved first.
 
 ## Files
 
@@ -76,6 +79,7 @@ Settings are saved in your MacroQuest `config` folder:
 
 ## Known limits
 
+- The only outside site it touches is Allakhazam: mob-type links open a search in your web browser, and only when you click one. Slayer Farm itself never contacts any server.
 - Zone suggestions come from community data and are best effort. Some mob types use plain-English names that may not match the game's race names exactly; the learning feature fills those gaps over time.
 
 ## Credits
