@@ -20,6 +20,7 @@ local travelAttempts = 0
 local lastMoving = 0
 local lastZoneCheck = 0
 local regroupSent = false
+local nextZone = nil
 
 local function zoneName(shortName)
     local zone = data.zones[shortName or ""]
@@ -50,6 +51,13 @@ end
 
 local function currentZone()
     return (mq.TLO.Zone.ShortName() or ""):lower()
+end
+
+local function inZone(shortName)
+    if not shortName then return false end
+    if currentZone() == shortName then return true end
+    local targetName = mq.TLO.Zone(shortName).Name()
+    return targetName ~= nil and targetName == mq.TLO.Zone.Name()
 end
 
 local function zoneComplete(shortName)
@@ -115,7 +123,7 @@ local function beginTravel(shortName)
         log("Nothing left to farm with the current filters.")
         return setState("idle", "Nothing left to farm")
     end
-    if currentZone() == shortName then return beginGather() end
+    if inZone(shortName) then return beginGather() end
     log("Traveling to " .. zoneName(shortName))
     groupCommand('/boxr manual')
     if groupTravel() then
@@ -128,19 +136,21 @@ local function beginTravel(shortName)
     setState("travel", "Traveling to " .. zoneName(shortName))
 end
 
+local function stopTravel()
+    mq.cmd('/squelch /travelto stop')
+    if groupTravel() then mq.cmd('/squelch /travelto group stop') end
+end
+
 local function stopAll(reason)
     hunter.stop(reason)
     opener.stop(reason)
-    if farm.state == "travel" then
-        mq.cmd('/squelch /travelto stop')
-        if groupTravel() then mq.cmd('/squelch /travelto group stop') end
-    end
+    if farm.state == "travel" then stopTravel() end
     if mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
     setState("idle", reason)
 end
 
 local function tickTravel()
-    if currentZone() == farm.zone then return beginGather() end
+    if inZone(farm.zone) then return beginGather() end
     local now = mq.gettime()
     local easyFind = mq.TLO.EasyFind
     if (easyFind and easyFind.Active()) or mq.TLO.Navigation.Active() or mq.TLO.Me.Zoning() then lastMoving = now end
@@ -229,6 +239,13 @@ local function handleRequest(request)
         if farm.zone then skippedZones[farm.zone] = true end
         hunter.stop("Skipped zone")
         opener.stop("Skipped zone")
+        if farm.state == "travel" then
+            stopTravel()
+            if mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
+            nextZone = chooseZone()
+            farm.zone = nextZone
+            return setState("switching", "Switching to " .. zoneName(nextZone))
+        end
         beginTravel(chooseZone())
     end
 end
@@ -262,6 +279,8 @@ function farm.tick()
         tickGather()
     elseif farm.state == "hunt" then
         tickHunt()
+    elseif farm.state == "switching" and mq.gettime() - stateSince > 2000 then
+        beginTravel(nextZone)
     end
 end
 

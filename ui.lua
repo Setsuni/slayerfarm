@@ -16,6 +16,7 @@ local stateColors = {
     idle = ImVec4(0.7, 0.7, 0.7, 1),
     travel = ImVec4(0.4, 0.7, 1, 1),
     gather = ImVec4(0.4, 0.7, 1, 1),
+    switching = ImVec4(0.4, 0.7, 1, 1),
     hunt = ImVec4(0.4, 1, 0.4, 1),
 }
 local grey = ImVec4(0.55, 0.55, 0.55, 1)
@@ -524,6 +525,8 @@ local function drawHuntSettings()
     slider("Rest below HP %", "restHP", 0, 90)
     ImGui.SameLine()
     slider("Rest below mana %", "restMana", 0, 90)
+    ImGui.SameLine()
+    checkbox("Rest for group", "restForGroup", "Off: only your own HP and mana decide when to rest.\nOn: also wait for group members (merc mana is ignored).")
     checkbox("Melee attack", "meleeAttack")
     ImGui.SameLine()
     checkbox("Send pet", "usePet")

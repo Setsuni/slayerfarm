@@ -170,16 +170,22 @@ local function needsRest()
     local hpGoal, manaGoal = restHP, restMana
     if resting then hpGoal, manaGoal = math.min(restHP + 40, 95), math.min(restMana + 50, 90) end
     local me = mq.TLO.Me
-    if (me.PctHPs() or 100) < hpGoal then return true end
-    if me.Class.CanCast() and (me.MaxMana() or 0) > 0 and (me.PctMana() or 100) < manaGoal then return true end
+    if (me.PctHPs() or 100) < hpGoal then return string.format("your HP %d%%", me.PctHPs() or 0) end
+    if me.Class.CanCast() and (me.MaxMana() or 0) > 0 and (me.PctMana() or 100) < manaGoal then
+        return string.format("your mana %d%%", me.PctMana() or 0)
+    end
+    if not settings.values.restForGroup then return nil end
     for i = 1, (mq.TLO.Group.Members() or 0) do
         local member = mq.TLO.Group.Member(i)
         if (member.ID() or 0) > 0 and not member.Dead() then
-            if (member.PctHPs() or 100) < hpGoal then return true end
-            if member.Class.CanCast() and (member.PctMana() or 100) < manaGoal then return true end
+            local name = member.CleanName() or "group member"
+            if (member.PctHPs() or 100) < hpGoal then return string.format("%s HP %d%%", name, member.PctHPs() or 0) end
+            if not member.Mercenary() and member.Class.CanCast() and (member.PctMana() or 100) < manaGoal then
+                return string.format("%s mana %d%%", name, member.PctMana() or 0)
+            end
         end
     end
-    return false
+    return nil
 end
 
 local function checkStuck()
@@ -402,10 +408,11 @@ function hunter.tick()
         return manageTarget()
     end
 
-    if needsRest() then
+    local restReason = needsRest()
+    if restReason then
         if not resting and mq.TLO.Navigation.Active() then mq.cmd('/squelch /nav stop log=off') end
         resting = true
-        hunter.status = string.format("Resting (HP %d%%)", mq.TLO.Me.PctHPs() or 0)
+        hunter.status = "Resting - waiting on " .. restReason
         return
     end
     resting = false

@@ -30,6 +30,7 @@ local defaults = {
     showArea = true,
     finishTargetFirst = false,
     autoNextZone = false,
+    restForGroup = false,
 }
 
 local function loadFile(path)
