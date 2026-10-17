@@ -2,7 +2,10 @@
 
 A MacroQuest Lua script that works through EverQuest **Slayer achievements** for you. It reads your Slayer progress, picks the zones that cover the most unfinished achievements, travels your group there, and hunts only the mobs that count.
 
+
 > **Live servers only.** Not built for or tested on EMU servers.
+<img width="946" height="617" alt="image" src="https://github.com/user-attachments/assets/96e49712-ba05-49c1-8c8c-089c4ffa5814" />
+<img width="946" height="820" alt="Screenshot 2026-10-17 111402" src="https://github.com/user-attachments/assets/45ee9bb0-4a26-40b8-b086-bfcec1e5a64c" />
 
 ## Features
 
