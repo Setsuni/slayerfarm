@@ -80,20 +80,27 @@ local function strangerNear(spawn)
 end
 
 local function haters()
-    local result = {}
+    local normal, ignored = {}, {}
     for i = 1, (mq.TLO.Me.XTargetSlots() or 0) do
         local xtarget = mq.TLO.Me.XTarget(i)
         local id = xtarget.ID() or 0
-        if id > 0 and xtarget.TargetType() == "Auto Hater" and not settings.isIgnored(zoneShortName(), xtarget.CleanName() or "") then
-            table.insert(result, id)
+        if id > 0 and xtarget.TargetType() == "Auto Hater" then
+            if not settings.isIgnored(zoneShortName(), xtarget.CleanName() or "") then
+                table.insert(normal, id)
+            elseif not isBanned(id) then
+                table.insert(ignored, id)
+            end
         end
     end
-    return result
+    return normal, ignored
 end
 
 local function isHater(id)
-    for _, haterId in ipairs(haters()) do
-        if haterId == id then return true end
+    local normal, ignored = haters()
+    for _, list in ipairs({ normal, ignored, }) do
+        for _, haterId in ipairs(list) do
+            if haterId == id then return true end
+        end
     end
     return false
 end
@@ -240,6 +247,7 @@ local function fight(spawn)
         local name = spawn.CleanName() or ""
         printf("\ag[Slayer Farm]\ax \ay%s\ax isn't taking damage, added it to this zone's ignore list.", name)
         settings.setIgnored(zoneShortName(), name, true)
+        banSpawn(hunter.targetId, 600)
         mq.cmd('/squelch /attack off')
         clearTarget()
     end
@@ -291,7 +299,7 @@ local function manageTarget()
     else
         if engaged and mq.TLO.Stick.Active() then mq.cmd('/squelch /stick off') end
         engaged = false
-        if spawn.LineOfSight() and mq.TLO.Target.ID() ~= hunter.targetId and ready('target', 1000) then mq.cmdf('/squelch /target id %d', hunter.targetId) end
+        if distance <= settings.values.targetDistance and spawn.LineOfSight() and mq.TLO.Target.ID() ~= hunter.targetId and ready('target', 1000) then mq.cmdf('/squelch /target id %d', hunter.targetId) end
         hunter.status = string.format("Moving to %s (%d)", spawn.CleanName() or "", math.floor(distance))
         navigateTo(spawn, spawn.LineOfSight() and approach or 5)
     end
@@ -356,7 +364,10 @@ function hunter.ignoreName(name)
     mq.cmd('/squelch /attack off')
     if (mq.TLO.Me.Pet.ID() or 0) > 0 then mq.cmd('/squelch /pet back off') end
     if mq.TLO.Target.CleanName() == name then mq.cmd('/squelch /target clear') end
-    if current == name then clearTarget() end
+    if current == name then
+        banSpawn(hunter.targetId, 120)
+        clearTarget()
+    end
     nextScan = 0
 end
 
@@ -398,7 +409,8 @@ function hunter.tick()
         end
     end
 
-    local hateList = haters()
+    local normalHaters, ignoredHaters = haters()
+    local hateList = #normalHaters > 0 and normalHaters or ignoredHaters
     if #hateList > 0 then
         local walk = {}
         for _, id in ipairs(hateList) do walk[id] = pathLength(id) or math.huge end

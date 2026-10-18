@@ -36,7 +36,7 @@ local function command(action)
         running = false
     elseif (action == "pause" or action == "resume") and farm.state ~= "hunt" then
         print("\ag[Slayer Farm]\ax Nothing to " .. action .. " - not hunting right now.")
-    elseif action == "start" or action == "stop" or action == "pause" or action == "resume" or action == "next" then
+    elseif action == "start" or action == "here" or action == "stop" or action == "pause" or action == "resume" or action == "next" then
         farm.request(action)
     else
         help()

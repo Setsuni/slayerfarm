@@ -133,7 +133,10 @@ local function drawObjectiveRows(entry, leadColumns, showDone)
             if leadColumns > 0 and not part.done then
                 ImGui.TableNextColumn()
                 local zones = zoneList(part)
-                if zones == "" then
+                if zones == "" and part.manual then
+                    ImGui.TextColored(manualColor, part.manual .. " (manual)")
+                    if ImGui.IsItemHovered() then ImGui.SetTooltip(part.manual .. "\n\nInstanced or special - do this one by hand. Slayer Farm won't travel or hunt here.") end
+                elseif zones == "" then
                     ImGui.TextColored(grey, "No suggested zone")
                 else
                     ImGui.Text(zones)
@@ -295,6 +298,9 @@ local function drawStatus()
 
     if farm.state == "idle" then
         if ImGui.Button("Start") then farm.request("start") end
+        ImGui.SameLine()
+        if ImGui.Button("Hunt here") then farm.request("here") end
+        if ImGui.IsItemHovered() then ImGui.SetTooltip("Hunt mobs that count right where you are, without traveling.\nUse it in LDoN missions, instances or any zone not on the list.") end
     else
         if ImGui.Button("Stop") then farm.request("stop") end
         if farm.state == "hunt" then
@@ -518,9 +524,10 @@ end
 local function drawHuntSettings()
     slider("Hunt radius", "huntRadius", 200, 6000, "How far from where the hunt starts to look for mobs.")
     ImGui.SameLine()
-    slider("Z range", "zRange", 50, 2000, "How far above or below the start point to look.")
-    slider("Approach distance", "approachDistance", 5, 120, "How close to get before fighting. Raise it for casters.")
+    slider("Z range", "zRange", 10, 1000, "How far above or below the start point to look. Around 30 keeps it on one floor indoors.")
+    slider("Approach distance", "approachDistance", 5, 200, "How close to get before fighting. Raise it for casters, bows or pets.")
     ImGui.SameLine()
+    slider("Target within", "targetDistance", 10, 200, "Only target a mob once it's this close and in line of sight\n(or once you're inside your approach distance).")
     slider("Avoid radius", "playerRadius", 30, 400, "Skip mobs with other players this close.")
     slider("Rest below HP %", "restHP", 0, 90)
     ImGui.SameLine()
@@ -559,6 +566,7 @@ ui.commands = {
     { command = "/slayerfarm show", about = "Open the window (same as /slayerfarm on its own)", },
     { command = "/slayerfarm hide", about = "Hide the window. Farming keeps running; /slayerfarm show brings it back.", },
     { command = "/slayerfarm start", about = "Start farming", },
+    { command = "/slayerfarm here", about = "Hunt mobs that count in your current zone, without traveling (LDoN missions, instances)", },
     { command = "/slayerfarm pause", about = "Pause hunting", },
     { command = "/slayerfarm resume", about = "Resume hunting", },
     { command = "/slayerfarm stop", about = "Stop farming and any travel. Slayer Farm keeps running.", },

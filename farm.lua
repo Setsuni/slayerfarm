@@ -11,6 +11,7 @@ farm.state = "idle"
 farm.status = "Idle"
 farm.zone = nil
 farm.mode = "hunt"
+farm.huntHere = false
 farm.log = {}
 
 local stateSince = 0
@@ -24,7 +25,8 @@ local nextZone = nil
 
 local function zoneName(shortName)
     local zone = data.zones[shortName or ""]
-    return zone and zone.name or (shortName or "?")
+    if zone then return zone.name end
+    return mq.TLO.Zone(shortName or "").Name() or shortName or "?"
 end
 
 local function log(text)
@@ -199,6 +201,7 @@ local function tickHunt()
         log(worker.status)
         return setState("idle", worker.status)
     end
+    if farm.huntHere then return end
     local now = mq.gettime()
     if now - lastZoneCheck < 5000 then return end
     lastZoneCheck = now
@@ -228,7 +231,15 @@ local function handleRequest(request)
         achievements.markSession()
         hunter.resetStats()
         skippedZones = {}
+        farm.huntHere = false
         beginTravel(chooseZone())
+    elseif request == "here" and farm.state == "idle" then
+        if #achievements.list == 0 then achievements.scan() end
+        achievements.markSession()
+        hunter.resetStats()
+        farm.huntHere = true
+        farm.zone = currentZone()
+        beginHunt()
     elseif request == "stop" then
         stopAll("Stopped")
     elseif request == "pause" and farm.state == "hunt" then

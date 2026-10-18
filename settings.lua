@@ -20,6 +20,7 @@ local defaults = {
     huntRadius = 2000,
     zRange = 500,
     approachDistance = 15,
+    targetDistance = 20,
     meleeAttack = true,
     usePet = true,
     restHP = 50,

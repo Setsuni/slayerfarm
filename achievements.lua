@@ -28,6 +28,7 @@ local function addUnique(list, value)
     table.insert(list, value)
 end
 
+local manualByRace = {}
 local singleRaceZones, fewRaceZones = {}, {}
 for _, entry in ipairs(data.achievements) do
     dataByName[normalize(entry.name)] = entry
@@ -36,14 +37,20 @@ for _, entry in ipairs(data.achievements) do
         for _, race in ipairs(entry.races) do
             target[race] = target[race] or {}
             for _, zone in ipairs(entry.zones or {}) do addUnique(target[race], zone) end
+            if #entry.races == 1 and entry.manual then manualByRace[race] = entry.manual end
         end
     end
 end
+
+local function hasOwnSuggestion(race)
+    return singleRaceZones[race] ~= nil and (#singleRaceZones[race] > 0 or manualByRace[race] ~= nil)
+end
+
 for race, zones in pairs(fewRaceZones) do
-    zonesByRace[race] = (singleRaceZones[race] and #singleRaceZones[race] > 0) and singleRaceZones[race] or zones
+    zonesByRace[race] = hasOwnSuggestion(race) and singleRaceZones[race] or zones
 end
 for race, zones in pairs(singleRaceZones) do
-    if #zones > 0 then zonesByRace[race] = zones end
+    if hasOwnSuggestion(race) then zonesByRace[race] = zones end
 end
 
 local function zonesFor(baseZones, parts, remaining)
@@ -89,7 +96,7 @@ local function readProgress(achievement)
         if objectiveCount > 1 then
             local description = objective.Description() or "?"
             local race = singular(description)
-            local part = { description = description, race = race, zones = zonesByRace[race] or {}, have = have, need = need, done = have >= need, }
+            local part = { description = description, race = race, zones = zonesByRace[race] or {}, manual = manualByRace[race], have = have, need = need, done = have >= need, }
             table.insert(parts, part)
             if not part.done then table.insert(remaining, part) end
         end

@@ -57,6 +57,7 @@ The folder must be named `slayerfarm`, or the script can't load its files.
 |---|---|
 | `/slayerfarm show` / `/slayerfarm hide` | Open or close the window |
 | `/slayerfarm start` | Start farming |
+| `/slayerfarm here` | Hunt mobs that count in your current zone without traveling (LDoN missions, instances, unlisted zones) |
 | `/slayerfarm pause` / `/slayerfarm resume` | Pause or resume hunting |
 | `/slayerfarm stop` | Stop farming and any travel (the script keeps running) |
 | `/slayerfarm next` | Skip to the next zone |
